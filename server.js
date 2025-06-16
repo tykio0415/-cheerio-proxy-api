@@ -13,11 +13,11 @@ app.get('/cheerio', async (req, res) => {
   if (!targetUrl) return res.status(400).json({ error: 'Missing URL parameter' })
 
   try {
-    // Step 1：先試著用原生 axios 抓
+    // ✅ Step 1：先嘗試直接用 axios 抓
     const response = await axios.get(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        'Accept-Language': 'en-US,en;q=0.9'
+        'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8'
       }
     })
 
@@ -29,15 +29,15 @@ app.get('/cheerio', async (req, res) => {
     return res.json({ title, images, paragraphs, html: $.html(), used: 'native' })
 
   } catch (err) {
-    console.warn("⚠️ Native fetch failed:", err.message)
+    console.warn('⚠️ Native fetch failed:', err.message)
 
+    // ✅ Step 2：fallback 到 Scrape.do（如果 API Key 有設定）
     if (!SCRAPE_API_KEY) {
       return res.status(500).json({ error: 'Scrape API Key missing', detail: err.message })
     }
 
-    // Step 2：失敗後 fallback 到 Scrape.do
     try {
-   const fallbackUrl = `https://api.scrape.do?token=${SCRAPE_API_KEY}&url=${encodeURIComponent(targetUrl)}&render=true&super=true&geocode=tw`;
+      const scrapeUrl = `https://api.scrape.do?token=${SCRAPE_API_KEY}&url=${encodeURIComponent(targetUrl)}&render=true&super=true&geocode=tw`
       const response = await axios.get(scrapeUrl)
 
       const $ = cheerio.load(response.data)
@@ -46,7 +46,6 @@ app.get('/cheerio', async (req, res) => {
       const paragraphs = $('p').map((i, el) => $(el).text()).get()
 
       return res.json({ title, images, paragraphs, html: $.html(), used: 'scrape.do' })
-
     } catch (err2) {
       return res.status(500).json({ error: 'Scrape.do failed', detail: err2.message })
     }

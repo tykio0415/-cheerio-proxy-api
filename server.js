@@ -37,7 +37,7 @@ app.get('/cheerio', async (req, res) => {
 
     // Step 2：失敗後 fallback 到 Scrape.do
     try {
-      const scrapeUrl = `https://api.scrape.do?token=${SCRAPE_API_KEY}&url=${encodeURIComponent(targetUrl)}`
+   const fallbackUrl = `https://api.scrape.do?token=${SCRAPE_API_KEY}&url=${encodeURIComponent(targetUrl)}&render=true&super=true&geocode=tw`;
       const response = await axios.get(scrapeUrl)
 
       const $ = cheerio.load(response.data)
